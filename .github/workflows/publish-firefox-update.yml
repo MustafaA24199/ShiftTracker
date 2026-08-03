@@ -54,7 +54,7 @@ jobs:
         run: npm install --global web-ext@10
 
       - name: Validate extension
-        run: web-ext lint --source-dir "$EXTENSION_DIR"
+        run: web-ext lint --self-hosted --source-dir "$EXTENSION_DIR"
 
       - name: Sign extension with Mozilla
         env:
