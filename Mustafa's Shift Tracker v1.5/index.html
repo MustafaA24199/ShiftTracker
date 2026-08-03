@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<link rel="stylesheet" href="vendor/bootstrap.min.css">
+	<style>
+		body {
+			/* font-size: 115%; */
+			margin-top: 20px;
+		}
+
+		sup {
+			font-size: 50%;
+			padding-right: 5px;
+		}
+
+		.card-header {
+			font-size: 115%;
+		}
+
+		.card-title {
+			font-size: 225% !important;
+		}
+
+		.gap {
+			margin-top: 20px;
+		}
+
+		#loading {
+			position: absolute;
+			top: 5px;
+			left: 5px;
+			display: none;
+		}
+
+		#comp_error {
+			display: none;
+		}
+
+		.hide {
+			display: none;
+		}
+
+		.cluster-heading {
+			margin-bottom: 5px;
+		}
+
+		.cluster-aisle {
+			margin-bottom: 5px;
+		}
+
+		.cluster-row {
+			margin-bottom: 10px;
+		}
+	</style>
+</head>
+
+<body>
+	<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+		<symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+			<path
+				d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z" />
+		</symbol>
+		<symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+			<path
+				d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" />
+		</symbol>
+		<symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+			<path
+				d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+		</symbol>
+	</svg>
+
+	<div class="container-fluid">
+
+		<!-- Loading Icon -->
+		<div id="loading" class="spinner-grow spinner-grow-sm text-primary" role="status">
+			<span class="sr-only"></span>
+		</div>
+
+		<!-- Current Station / Cycle Notification -->
+		<div id="stationAlert" class="alert alert-warning alert-dismissible fade show" role="alert">
+			<div class="d-flex align-items-center">
+				<svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:">
+					<use xlink:href="#info-fill" />
+				</svg>
+				<p class="mb-0">Your station is currently set to <strong><span id="sc2_node"></span> / <span
+							id="sc2_cycle"></span></strong></p>
+			</div>
+			<hr>
+
+			<!-- Link to change the Current Station / Cycle -->
+			<p class="mb-0 text-center">
+				<a id="reinitialize" class="link-primary" data-bs-toggle="collapse" href="#fixStationData" role="button"
+					aria-expanded="false" aria-controls="fixStationData">
+					Not correct? Click here.
+				</a>
+			</p>
+
+			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+
+		<!-- Form to change the Current Station / Cycle -->
+		<div class="collapse" id="fixStationData">
+			<div class="card">
+				<div class="card-header">Manual Override</div>
+				<div class="card-body">
+					<form>
+						<div class="mb-3">
+							<label for="manualStationCode" class="form-label">Station Code</label>
+							<input type="text" class="form-control" id="manualStationCode" placeholder="Enter your station code">
+						</div>
+
+						<div class="mb-3">
+							<label for="manualCycleCode" class="form-label">Cycle</label>
+							<select class="form-select" id="manualCycleCode" aria-label="Change the current cycle"></select>
+						</div>
+
+						<div class="text-end">
+							<a id="manualUpdate" class="btn btn-primary" data-bs-toggle="collapse" href="#fixStationData"
+								role="button" aria-expanded="false" aria-controls="fixStationData">Update</a>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Projected Volume / Finish Planner -->
+		<div class="row g-2 mb-3">
+			<div class="col-6">
+				<label for="projected_volume" class="form-label mb-1">Projected Volume</label>
+				<input id="projected_volume" class="form-control form-control-lg" type="text"
+					placeholder="Enter Projected Volume...">
+			</div>
+			<div class="col-6">
+				<label for="desired_finish_time" class="form-label mb-1">Desired Finish Time</label>
+				<input id="desired_finish_time" class="form-control form-control-lg" type="time">
+			</div>
+			<div class="col-6">
+				<label for="break_start_time" class="form-label mb-1">Break Start Time</label>
+				<input id="break_start_time" class="form-control form-control-lg" type="time">
+			</div>
+			<div class="col-6">
+				<label for="break_duration_minutes" class="form-label mb-1">Break Duration (mins)</label>
+				<input id="break_duration_minutes" class="form-control form-control-lg" type="number" min="0" value="30">
+			</div>
+		</div>
+
+		<table class="table table-info">
+			<tbody>
+				<tr>
+					<th scope="row">Remaining Volume</th>
+					<td id="planner_remaining_volume" class="text-end">0</td>
+				</tr>
+				<!-- <tr>
+					<th scope="row">Target FPH by Desired Finish</th>
+					<td id="planner_target_fph" class="text-end">--</td>
+				</tr>
+				<tr>
+					<th scope="row">Predicted Finish at Actual Induct FPH</th>
+					<td id="planner_predicted_finish" class="text-end">--</td>
+				</tr> -->
+			</tbody>
+		</table>
+
+		<!-- SCC Volume Plan and Total Arrived -->
+		<table class="table table-striped">
+			<tbody>
+				<tr>
+					<th scope="row">Predicted Dispatch (LMCP)</th>
+					<td id="predicted_dispatch" class="text-end">0</td>
+				</tr>
+				<tr class="table-info">
+					<th scope="row">Current Cycle Planned</th>
+					<td id="current_cycle_planned" class="text-end">0</td>
+				</tr>
+				<tr class="table-success">
+					<th scope="row">Total Arrived</th>
+					<td id="total_arrived_actual" class="text-end">0</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<!-- Induct and Sort FPH -->
+		<div class="row">
+
+			<div class="col mb-3 pr-1 d-flex">
+				<div class="card w-100 h-100">
+					<div class="card-header">Induct FPH</div>
+					<div class="card-body">
+						<h5 class="card-title text-center" id="induct_rate_actual"></h5>
+						<small class="txt-muted d-block mt-1 text-center">
+							Predicted Finish Time At Current Rate: 
+						<span id="planner_predicted_finish"></span>
+						</small>
+					</div>
+				</div>
+
+			</div>
+
+			<div class="col mb-3 pr-1 d-flex">
+				<div class="card w-100 h-100">
+					<div class="card-header">Target FPH</div>
+					<div class="card-body">
+						<h5 class="card-title text-center" id="planner_target_fph"></h5>
+						<small class="txt-muted d-block mt-1 text-center">
+							Needed To Finish At Desired Time
+						</small>
+					</div>
+				</div>
+			</div>
+
+			<div class="col mb-3 pr-1 d-flex">
+				<div class="card w-100 h-100">
+					<div class="card-header">Stow FPH</div>
+					<div class="card-body">
+						<h5 class="card-title text-center" id="sort_rate_actual"></h5>
+					</div>
+				</div>
+			</div>
+
+		</div>
+
+
+		<!-- Sort Metrics -->
+
+		<table class="table table-danger">
+			<tbody>
+				<tr>
+					<th scope="row">WIP (minutes)</th>
+					<td id="wip" class="text-end"></td>
+				</tr>
+				<tr>
+					<th scope="row" scope="row">At Station</th>
+					<td id="AT_STATION" class="text-end">0</td>
+				</tr>
+
+			</tbody>
+		</table>
+
+		<table class="table table-striped">
+			<tbody>
+				<tr class="table-primary">
+					<th scope="row">Total Inducted</th>
+					<td id="total_inducted" class="text-end">0</td>
+				</tr>
+				<tr class="table-warning">
+					<th scope="row">Pending Induct</th>
+					<td id="pending_induct" class="text-end">0</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<table class="table table-striped">
+			<tbody>
+				<tr>
+					<th scope="row">Ready for Departure</th>
+					<td id="STOWED" class="text-end">0</td>
+				</tr>
+				<tr>
+					<th scope="row">Sidelined</th>
+					<td id="arrived_sidelined" class="text-end">0</td>
+				</tr>
+				<tr>
+					<th scope="row">Fixit Queue</th>
+					<td id="fixit_queue" class="text-end"></td>
+				</tr>
+				<tr>
+					<th scope="row">Scan Compliance</th>
+					<td class="text-end">
+						<span id="scan_compliance">0</span>%
+					</td>
+				</tr>
+			</tbody>
+		</table>
+
+
+
+		<!--
+			==============================
+				STOW / DWELLING / BACKLOG
+			==============================
+			-->
+		<hr style="margin-top: 5px">
+
+		<div class="card">
+			<h4 class="card-header">Dwelling Packages</h4>
+
+			<table id="backlog_clusters" class="table table-striped mb-0">
+				<thead>
+					<tr>
+						<th scope="col" class="text-center">Cluster</th>
+						<th scope="col" class="text-end">Inducted</th>
+						<th scope="col" class="text-end"><abbr title="Minutes of Work">MoW</abbr></th>
+						<th scope="col" class="text-end"><abbr title="Scan Compliance %">SC %</abbr></th>
+					</tr>
+				</thead>
+				<tbody>
+
+				</tbody>
+			</table>
+
+			<div class="card-footer text-end">
+				<a id="better-dwelling" href="#" class="card-link">Dwelling <svg xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 448 512" width="12" height="12">
+						<!--! Font Awesome Pro 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2022 Fonticons, Inc. -->
+						<path
+							d="M288 32c-17.7 0-32 14.3-32 32s14.3 32 32 32h50.7L169.4 265.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L384 141.3V192c0 17.7 14.3 32 32 32s32-14.3 32-32V64c0-17.7-14.3-32-32-32H288zM80 64C35.8 64 0 99.8 0 144V400c0 44.2 35.8 80 80 80H336c44.2 0 80-35.8 80-80V320c0-17.7-14.3-32-32-32s-32 14.3-32 32v80c0 8.8-7.2 16-16 16H80c-8.8 0-16-7.2-16-16V144c0-8.8 7.2-16 16-16h80c17.7 0 32-14.3 32-32s-14.3-32-32-32H80z" />
+					</svg></a>
+			</div>
+
+		</div>
+
+
+		<!--
+			==============================
+				LINE HAULS
+			==============================
+			-->
+
+		<div class="row gap">
+			<div class="col">
+				<div class="card">
+					<h4 class="card-header">Line Hauls</h4>
+
+					<table id="linehauls" class="table table-striped">
+						<thead>
+							<tr>
+								<th scope="col"></th>
+								<th scope="col">VRID</th>
+								<th scope="col" class="text-end">Volume</th>
+								<th scope="col" class="text-end">SAT</th>
+							</tr>
+						</thead>
+						<tbody>
+
+						</tbody>
+					</table>
+
+				</div>
+			</div>
+		</div>
+
+		<!--
+			==============================
+				HOURLY TRACKER
+			==============================
+			-->
+
+		<div class="row gap">
+			<div class="col">
+				<div class="card">
+					<h4 class="card-header">Hourly Tracker</h4>
+
+					<table class="table table-striped">
+						<thead>
+							<tr>
+								<th scope="col"></th>
+								<th scope="col" class="text-end">@Station</th>
+								<th scope="col" class="text-end">Stowed</th>
+								<th scope="col" class="text-end">Inducted</th>
+							</tr>
+						</thead>
+						<tbody id="hourly_tracker">
+
+						</tbody>
+					</table>
+
+				</div>
+			</div>
+		</div>
+
+		<!--
+			==============================
+				FOOTER
+			==============================
+			-->
+
+		<!-- <div class="row gap">
+			<div class="col">
+				<div class="alert alert-light" role="alert">
+					Have any questions? Contact <a class="link-primary" href="https://phonetool.amazon.com/users/tieper"
+						target="_new">@tieper</a>
+				</div>
+			</div>
+		</div> -->
+
+	</div><!-- /container -->
+	<br>
+
+	<script src="vendor/jquery.js"></script>
+	<script src="vendor/bootstrap.bundle.min.js"></script>
+
+	<script src="src/SC2.js"></script>
+	<script src="src/hourly.js"></script>
+
+	<script src="src/app.js"></script>
+</body>
+
+</html>

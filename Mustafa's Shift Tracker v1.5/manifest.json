@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Mustafa's Shift Tracker",
+  "description": "Added Time customization to the original Robert Wins! by tieper@amazon.com -- 0.1.5 Rollback to Automatic as API endpoint seems to be up again + adding persistance to old version",
+  "version": "0.1.5",
+  "sidebar_action": {
+    "default_icon": "icons/Amazon_icon.png",
+    "default_title": "Mustafa's Shift Tracker",
+    "default_panel": "index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://logistics.amazon.com/dwellings*"
+      ],
+      "js": [
+        "better-dwelling.js"
+      ]
+    }
+  ],
+  "permissions": [
+    "<all_urls>",
+    "webRequest"
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "mustafa-shift-tracker-2026-unique@local",
+      "data_collection_permissions": {
+        "required": [
+          "none"
+        ],
+        "optional": []
+      }
+    }
+  }
+}

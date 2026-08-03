@@ -1,0 +1,14 @@
+ - Fix dwelling packages full page (numbers wrong)
+ - Add WIP to dwelling packages view
+ - Add dimensions and weight to dwelling packages full page
+ - Find a comprimise on the hourly tracker
+ - Add a dark version?
+ - Average ARRIVED package type and weight dispersal 
+
+
+#Changelog
+ - Updated to the latest Bootstrap libary. (visual styles)
+ - Added trending (up/down) markers to the Induct and Stow FPH metrics.
+ - The sidebar now pulls the WIP upper and lower limits from SCC.
+ - Fixed the cycles not pulling correctly from SCC when manually setting the Station.
+ - Added MoW (Minutes of Work) to the Dwelling Packages view.
