@@ -1,0 +1,122 @@
+name: Publish Firefox update
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - updates.json
+
+concurrency:
+  group: firefox-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  EXTENSION_DIR: Mustafa's Shift Tracker v1.5
+  EXTENSION_ID: mustafa-shift-tracker-2026-unique@local
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Create an automatic release version
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const manifestPath = path.join(process.env.EXTENSION_DIR, 'manifest.json');
+          const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+          const baseVersion = manifest.version;
+
+          if (!/^\d+(\.\d+){0,2}$/.test(baseVersion)) {
+            throw new Error('manifest.json version must contain one to three numeric parts.');
+          }
+
+          const releaseVersion = `${baseVersion}.${process.env.GITHUB_RUN_NUMBER}`;
+          manifest.version = releaseVersion;
+          fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+          fs.appendFileSync(process.env.GITHUB_ENV, `RELEASE_VERSION=${releaseVersion}\n`);
+          NODE
+
+      - name: Install Firefox packaging tools
+        run: npm install --global web-ext@10
+
+      - name: Validate extension
+        run: web-ext lint --source-dir "$EXTENSION_DIR"
+
+      - name: Sign extension with Mozilla
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          web-ext sign \
+            --channel=unlisted \
+            --self-hosted \
+            --source-dir "$EXTENSION_DIR" \
+            --artifacts-dir web-ext-artifacts \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET"
+
+      - name: Prepare signed package and update manifest
+        shell: bash
+        run: |
+          signed_xpi="$(find web-ext-artifacts -maxdepth 1 -type f -name '*.xpi' -print -quit)"
+          if [ -z "$signed_xpi" ]; then
+            echo "Mozilla did not return a signed XPI file." >&2
+            exit 1
+          fi
+
+          asset_name="mustafa-shift-tracker-${RELEASE_VERSION}.xpi"
+          mv "$signed_xpi" "$asset_name"
+          sha256="$(sha256sum "$asset_name" | cut -d ' ' -f 1)"
+          download_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/v${RELEASE_VERSION}/${asset_name}"
+
+          node - "$download_url" "$sha256" <<'NODE'
+          const fs = require('fs');
+          const [downloadUrl, sha256] = process.argv.slice(2);
+          const updates = {
+            addons: {
+              [process.env.EXTENSION_ID]: {
+                updates: [{
+                  version: process.env.RELEASE_VERSION,
+                  update_link: downloadUrl,
+                  update_hash: `sha256:${sha256}`
+                }]
+              }
+            }
+          };
+          fs.writeFileSync('updates.json', `${JSON.stringify(updates, null, 2)}\n`);
+          NODE
+
+          echo "ASSET_NAME=$asset_name" >> "$GITHUB_ENV"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${RELEASE_VERSION}" "$ASSET_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Shift Tracker ${RELEASE_VERSION}" \
+            --generate-notes
+
+      - name: Publish Firefox update metadata
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates.json
+          git commit -m "Publish Firefox update ${RELEASE_VERSION} [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
