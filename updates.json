@@ -1,0 +1,13 @@
+{
+  "addons": {
+    "mustafa-shift-tracker-2026-unique@local": {
+      "updates": [
+        {
+          "version": "0.1.5.3",
+          "update_link": "https://github.com/MustafaA24199/ShiftTracker/releases/download/v0.1.5.3/mustafa-shift-tracker-0.1.5.3.xpi",
+          "update_hash": "sha256:7075545fc3a6b5b1c2a907c435e1e82e4a1d72d238246b03ed6cf5dfd8b65ae6"
+        }
+      ]
+    }
+  }
+}
