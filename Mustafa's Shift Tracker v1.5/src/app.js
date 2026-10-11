@@ -65,9 +65,9 @@ const cap = () => {
 	// If the user enters a projected volume, use that as the planning override.
 	if (manualProjectedVolume > 0) return manualProjectedVolume;
 
-	// If the projected volume field is blank, use Current Cycle Planned from the API/UI.
-	const currentCyclePlanned = textNumber("#current_cycle_planned");
-	return currentCyclePlanned || 0;
+	// If the projected volume field is blank, use Predicted Dispatch (LMCP) from the API/UI.
+	const predictedDispatch = textNumber("#predicted_dispatch");
+	return predictedDispatch || 0;
 };
 
 function clockTimeToDate(timeValue, baseDate) {
