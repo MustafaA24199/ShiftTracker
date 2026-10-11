@@ -3,9 +3,9 @@
     "mustafa-shift-tracker-2026-unique@local": {
       "updates": [
         {
-          "version": "0.1.5.6",
-          "update_link": "https://github.com/MustafaA24199/ShiftTracker/releases/download/v0.1.5.6/mustafa-shift-tracker-0.1.5.6.xpi",
-          "update_hash": "sha256:44aa3379e0818635f274df4a48097cbe8290d3742e8154abbc718c2863ef9347"
+          "version": "0.1.5.7",
+          "update_link": "https://github.com/MustafaA24199/ShiftTracker/releases/download/v0.1.5.7/mustafa-shift-tracker-0.1.5.7.xpi",
+          "update_hash": "sha256:ec8155c6a36d6369679af54c475ffaa9e248b3338f697ed03eb9ce6194c80ec6"
         }
       ]
     }
